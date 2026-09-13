@@ -1,0 +1,79 @@
+/* Main page */
+
+.main {
+    padding-top: 2rem;
+}
+
+
+/* Header */
+
+.hero {
+    padding: 30px;
+    border-radius: 20px;
+    background: linear-gradient(
+        135deg,
+        #111827,
+        #1f2937
+    );
+    margin-bottom: 30px;
+}
+
+.hero h1 {
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+
+.hero p {
+    font-size: 17px;
+    opacity: 0.85;
+}
+
+
+/* Score cards */
+
+.score-card {
+    padding: 22px;
+    border-radius: 16px;
+    border: 1px solid #374151;
+    background: #111827;
+    text-align: center;
+}
+
+.score-number {
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+
+/* Skill badges */
+
+.skill {
+    display: inline-block;
+    padding: 7px 12px;
+    margin: 4px;
+    border-radius: 20px;
+    background: #1f2937;
+    border: 1px solid #4b5563;
+    font-size: 13px;
+}
+
+
+/* Recommendation */
+
+.recommendation {
+    padding: 18px;
+    border-radius: 15px;
+    background: #111827;
+    border-left: 5px solid #60a5fa;
+    margin-top: 15px;
+}
+
+
+/* Footer */
+
+.footer {
+    text-align: center;
+    padding: 30px;
+    opacity: 0.6;
+}
