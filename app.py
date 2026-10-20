@@ -3,7 +3,8 @@ import pandas as pd
 
 from src.parser import extract_resume_text
 from src.preprocessing import clean_text
-from src.skills import extract_skills
+from src.skills import extract_job_keywords, extract_skills
+from src.resume_analyzer import analyze_resume
 from src.matcher import (
     calculate_similarity,
     calculate_skill_score,
@@ -80,16 +81,34 @@ if st.button("🚀 Analyze Candidates"):
             job_description
         )
 
-        job_skills = extract_skills(
-            clean_job
-        )
+        job_skills = extract_skills(clean_job)
+        job_keywords = extract_job_keywords(job_description)
+
+        with st.expander("Job keywords this checker will look for"):
+            st.caption("These are suggestions extracted from the job description. Add them only when they accurately reflect your experience.")
+            st.write(", ".join(job_keywords) or "No keywords could be extracted.")
+
+        if not job_skills:
+            st.info(
+                "No skills from the built-in skill list were found in the job description. "
+                "The ranking will rely on text similarity; skill match scores will be 0%."
+            )
 
         results = []
 
+        errors = []
         for file in uploaded_files:
+            try:
+                resume_text = extract_resume_text(file)
+            except Exception as error:
+                errors.append(f"{file.name}: could not read file ({error})")
+                continue
 
-            # Extract resume
-            resume_text = extract_resume_text(file)
+            if not resume_text.strip():
+                errors.append(
+                    f"{file.name}: no text could be extracted. It may be scanned or empty."
+                )
+                continue
 
             # Clean resume
             clean_resume = clean_text(
@@ -99,6 +118,12 @@ if st.button("🚀 Analyze Candidates"):
             # Extract skills
             resume_skills = extract_skills(
                 clean_resume
+            )
+            resume_report = analyze_resume(
+                resume_text,
+                job_skills,
+                job_keywords,
+                filename=file.name,
             )
 
             # Similarity
@@ -120,18 +145,10 @@ if st.button("🚀 Analyze Candidates"):
             )
 
             # Matching skills
-            matching_skills = list(
-                set(resume_skills)
-                &
-                set(job_skills)
-            )
+            matching_skills = [skill for skill in job_skills if skill in resume_skills]
 
             # Missing skills
-            missing_skills = list(
-                set(job_skills)
-                -
-                set(resume_skills)
-            )
+            missing_skills = [skill for skill in job_skills if skill not in resume_skills]
 
             results.append({
 
@@ -147,12 +164,24 @@ if st.button("🚀 Analyze Candidates"):
                     ", ".join(matching_skills),
 
                 "Missing Skills":
-                    ", ".join(missing_skills)
+                    ", ".join(missing_skills),
+
+                "Resume Report": resume_report,
             })
 
 
+        for error in errors:
+            st.warning(error)
+
+        if not results:
+            st.error("No readable resume text was found, so candidates could not be ranked.")
+            st.stop()
+
         # Convert results to DataFrame
-        results_df = pd.DataFrame(results)
+        results_df = pd.DataFrame(
+            [{key: value for key, value in result.items() if key != "Resume Report"}
+             for result in results]
+        )
 
         # Rank candidates
         results_df = results_df.sort_values(
@@ -176,8 +205,27 @@ if st.button("🚀 Analyze Candidates"):
 
         st.dataframe(
             results_df,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
+
+        st.subheader("Candidate details")
+        results_by_name = {result["Candidate"]: result for result in results}
+        for candidate_name in results_df["Candidate"]:
+            result = results_by_name[candidate_name]
+            with st.expander(f"{result['Candidate']} · {result['Final Score']}%"):
+                st.write(f"**Text similarity:** {result['Similarity']}%")
+                st.write(f"**Skill match:** {result['Skill Match']}%")
+                st.write("**Matching skills:** " + (result["Matching Skills"] or "None found"))
+                st.write("**Missing job skills:** " + (result["Missing Skills"] or "None"))
+                report = result["Resume Report"]
+                passed_checks = sum(check["passed"] for check in report["checks"])
+                st.write(f"**Resume quality checks:** {passed_checks}/{len(report['checks'])} passed")
+                for check in report["checks"]:
+                    icon = "✅" if check["passed"] else "💡"
+                    st.write(f"{icon} **{check['name']}:** {check['detail']}")
+                st.write("**Job keywords found:** " + (", ".join(report["matched_keywords"]) or "None"))
+                st.write("**Job keywords not found:** " + (", ".join(report["missing_keywords"]) or "None"))
 
 
         # ------------------------------------------------

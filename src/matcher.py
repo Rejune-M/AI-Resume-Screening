@@ -4,16 +4,21 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 def calculate_similarity(resume_text, job_description):
 
+    if not resume_text.strip() or not job_description.strip():
+        return 0.0
+
     documents = [
         resume_text,
         job_description
     ]
 
-    vectorizer = TfidfVectorizer(
-        stop_words="english"
-    )
+    vectorizer = TfidfVectorizer(stop_words="english")
 
-    tfidf_matrix = vectorizer.fit_transform(documents)
+    try:
+        tfidf_matrix = vectorizer.fit_transform(documents)
+    except ValueError:
+        # Both documents may contain only stop words or punctuation.
+        return 0.0
 
     similarity = cosine_similarity(
         tfidf_matrix[0:1],

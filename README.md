@@ -12,7 +12,15 @@ What it does
 * Generate an ATS-style match score
 * Show missing or important skills
 * Give suggestions to improve the resume
+* Extract job-specific keywords and show which ones appear in each resume
+* Check for common resume basics, including contact details, standard sections,
+  measurable results, action language, date ranges, repeated wording, and long text blocks
 * Simple and interactive web interface
+
+The resume checks are practical writing and parsing hints, not an official or
+universal ATS score. Keyword suggestions are generated from the pasted job
+description; include them only when they accurately describe the candidate's
+experience.
 
 Technologies Used
 
